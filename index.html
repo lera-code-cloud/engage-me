@@ -812,8 +812,12 @@ function renderResults(posts, reset) {
   else window._posts = window._posts.concat(posts);
 }
 
+function stripCiteTags(str) {
+  return String(str).replace(/]*>|<\/cite>/gi, '');
+}
+
 function escHtml(str) {
-  return String(str)
+  return stripCiteTags(String(str))
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
