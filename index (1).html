@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Celebritist · Post Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.15);
+    --accent: #c9a96e;
+    --accent-dim: rgba(201,169,110,0.12);
+    --accent-dim2: rgba(201,169,110,0.06);
+    --text: #f0ece4;
+    --text-muted: rgba(240,236,228,0.45);
+    --text-mid: rgba(240,236,228,0.7);
+    --red: #e05555;
+    --green: #4caf80;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    line-height: 1.65;
+  }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 400;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  header h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  header p {
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+  }
+
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+    margin: 20px auto;
+    opacity: 0.4;
+  }
+
+  .mode-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .mode-tab {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+  }
+
+  .mode-tab:hover {
+    border-color: var(--border-hover);
+    background: var(--surface2);
+  }
+
+  .mode-tab.active {
+    border-color: var(--accent);
+    background: var(--accent-dim2);
+  }
+
+  .mode-tab .tab-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .mode-tab .tab-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .mode-tab.active .tab-title {
+    color: var(--accent);
+  }
+
+  .mode-tab .tab-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .input-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+
+  .input-area.hidden { display: none; }
+
+  .input-area label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  textarea, input[type="text"] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    padding: 12px 16px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  textarea:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder, input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .generate-btn {
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    background: #d4b47e;
+    transform: translateY(-1px);
+  }
+
+  .generate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .free-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 16px;
+    font-size: 14px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .free-btn:hover:not(:disabled) {
+    background: #d4b47e;
+    transform: translateY(-1px);
+  }
+
+  .free-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: rgba(0,0,0,0.7);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .spinner.show { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .results {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .results.hidden { display: none; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card:nth-child(2) { animation-delay: 0.08s; }
+  .result-card:nth-child(3) { animation-delay: 0.16s; }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-num {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.7;
+    flex-shrink: 0;
+    padding-top: 3px;
+  }
+
+  .card-topic {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text);
+    flex: 1;
+    line-height: 1.3;
+  }
+
+  .card-tag {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .post-text {
+    font-size: 14px;
+    color: var(--text-mid);
+    line-height: 1.75;
+    white-space: pre-wrap;
+  }
+
+  .question-block {
+    background: var(--accent-dim2);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 14px 16px;
+  }
+
+  .question-block .section-label { color: var(--accent); opacity: 0.7; }
+
+  .question-text {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .photo-block {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+  }
+
+  .photo-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .sources-block {
+    border-top: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+
+  .sources-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sources-list li {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+
+  .src-num {
+    color: var(--accent);
+    opacity: 0.6;
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+
+  .src-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    word-break: break-all;
+    transition: color 0.15s;
+  }
+
+  .src-link:hover { color: var(--accent); }
+
+  .card-actions {
+    padding: 12px 24px 16px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .copy-btn.copied {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .error-msg {
+    background: rgba(224,85,85,0.08);
+    border: 1px solid rgba(224,85,85,0.25);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #e88;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .error-msg.show { display: block; }
+
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    display: none;
+  }
+
+  .loading-state.show { display: block; }
+
+  .loading-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .loading-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  .loading-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+  }
+
+  .more-btn-wrap {
+    text-align: center;
+    margin-top: 32px;
+    display: none;
+  }
+
+  .more-btn-wrap.show { display: block; }
+
+  .more-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .more-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="app">
+
+  <header>
+    <h1>Engage <em>me!</em></h1>
+    <div class="divider"></div>
+  </header>
+
+  <div class="mode-tabs">
+    <div class="mode-tab active" id="tab-free" onclick="switchMode('free')">
+      <div class="tab-icon">✦</div>
+      <div class="tab-title">Free Generation</div>
+      <div class="tab-desc">3 post ideas generated independently — no input needed</div>
+    </div>
+    <div class="mode-tab" id="tab-ideas" onclick="switchMode('ideas')">
+      <div class="tab-icon">◈</div>
+      <div class="tab-title">By Keywords</div>
+      <div class="tab-desc">Name, emotion, topic, or paste a URL — anything works</div>
+    </div>
+  </div>
+
+  <div class="input-area hidden" id="input-keywords">
+    <label>Keywords · name · emotion · url · anything</label>
+    <div class="input-row">
+      <input type="text" id="keywords-input" placeholder="e.g. Taylor Swift, grief, second marriage, https://..." />
+      <button class="generate-btn" id="btn-keywords" onclick="generate('ideas')">
+        <span class="spinner" id="spin-ideas"></span>
+        Generate
+      </button>
+    </div>
+  </div>
+
+  <button class="free-btn" id="btn-free" onclick="generate('free')">
+    <span class="spinner" id="spin-free"></span>
+    Generate 3 Post Ideas
+  </button>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="loading-state" id="loading-state">
+    <div class="loading-dots">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="loading-text" id="loading-text">Searching web for trending stories…</div>
+  </div>
+
+  <div class="results hidden" id="results"></div>
+
+  <div class="more-btn-wrap" id="more-btn-wrap">
+    <button class="more-btn" onclick="generateMore()">Generate 3 More Ideas</button>
+  </div>
+
+</div>
+
+<script>
+let currentMode = 'free';
+let lastMode = null;
+let lastKeywords = '';
+let conversationHistory = [];
+
+const SYSTEM_PROMPT = `You are an expert Facebook content strategist for "Celebritist", a page with 2.2M followers.
+
+AUDIENCE PROFILE:
+- 81.9% women, ages 35–65+
+- 71.2% US-based
+- Interests: family, relationships, marriage, grief, celebrity culture, aging, social values
+
+YOUR JOB:
+Generate exactly 3 Facebook post ideas that spark long, emotional comment threads.
+
+TONE OF VOICE:
+Write in a confident, opinionated tone — the post should have a clear point of view, like a smart friend who has something real to say. Never offensive, never preachy, never neutral. Think: bold, warm, a little provocative. The reader should feel like someone finally said what everyone was thinking.
+
+FORMATTING RULES (apply to every post body):
+- MAX 3 paragraphs. Each paragraph: max 3 sentences, ideally 2.
+- Include 2–4 emojis per post. Place them mid-sentence or at the end of a paragraph — never at the start of every line. Emojis should amplify emotion, not just decorate.
+- KEY words — the most emotionally charged, intriguing, or surprising ones — must be in ALL CAPS.
+- The post must make the reader feel compelled to share their opinion in the comments. This must happen organically through the emotional pull of the content, NOT through explicit call-to-action phrases like "tell us what you think" or "share in the comments."
+
+FACT INTEGRITY — this is non-negotiable:
+- Every named person, age, date, quote, and statistic must be independently verifiable via web search.
+- Do NOT fabricate specific details and then attach a plausible-sounding source. If you cannot confirm a fact, generalize it or remove it. Vague but true beats specific but invented.
+- After each post, list every source used. If a claim has no source, remove the claim. Only verifiable information is allowed.
+
+EVERY post idea must include:
+1. TOPIC — punchy title, max 8 words
+2. BODY — formatted per rules above. Use specific emotional details, real names/ages where relevant. Make the reader feel shock, empathy, admiration, or moral tension.
+3. QUESTION — one open-ended discussion question (NOT yes/no). Must invite personal stories. Start with "What do you think...", "How would you...", "What would it take...", etc.
+4. PHOTO CONCEPT — description of a split/before-after image or scroll-stopping visual.
+5. SOURCES — a numbered list of URLs or named publications for every fact used in the post. If no source exists for a claim, that claim must not appear in the post.
+
+RESPONSE FORMAT — return ONLY valid JSON, no markdown, no explanation:
+{
+  "posts": [
+    {
+      "topic": "...",
+      "body": "...",
+      "question": "...",
+      "photo": "...",
+      "sources": ["source1", "source2"]
+    }
+  ]
+}`;
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('tab-free').classList.toggle('active', mode === 'free');
+  document.getElementById('tab-ideas').classList.toggle('active', mode === 'ideas');
+  document.getElementById('input-keywords').classList.toggle('hidden', mode === 'free');
+  document.getElementById('btn-free').style.display = mode === 'free' ? 'flex' : 'none';
+}
+
+function setLoading(on, text) {
+  const loadEl = document.getElementById('loading-state');
+  const loadText = document.getElementById('loading-text');
+  const spinFree = document.getElementById('spin-free');
+  const spinIdeas = document.getElementById('spin-ideas');
+  const btnFree = document.getElementById('btn-free');
+  const btnKw = document.getElementById('btn-keywords');
+
+  loadEl.classList.toggle('show', on);
+  if (text) loadText.textContent = text;
+  spinFree.classList.toggle('show', on);
+  spinIdeas.classList.toggle('show', on);
+  btnFree.disabled = on;
+  btnKw.disabled = on;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 6000);
+}
+
+async function generate(mode) {
+  lastMode = mode;
+  lastKeywords = document.getElementById('keywords-input').value.trim();
+
+  let userMessage = '';
+  if (mode === 'free') {
+    userMessage = 'Search the web for currently trending emotional or controversial celebrity/human interest stories, then generate 3 post ideas based on what you find.';
+  } else {
+    if (!lastKeywords) { showError('Please enter keywords, a name, or a URL.'); return; }
+    userMessage = `Search the web for information about the following, then generate 3 post ideas: ${lastKeywords}`;
+  }
+
+  conversationHistory = [{ role: 'user', content: userMessage }];
+  await callAPI(userMessage, true);
+}
+
+async function generateMore() {
+  let userMessage = 'Generate 3 more post ideas. Avoid repeating previous topics. Search the web again if needed.';
+  conversationHistory.push({ role: 'user', content: userMessage });
+  await callAPI(userMessage, false);
+}
+
+async function callAPI(userMessage, resetResults) {
+  setLoading(true, 'Searching the web for stories…');
+  document.getElementById('error-msg').classList.remove('show');
+  document.getElementById('more-btn-wrap').classList.remove('show');
+  if (resetResults) {
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('results').classList.add('hidden');
+  }
+
+  setTimeout(() => {
+    if (document.getElementById('loading-state').classList.contains('show')) {
+      document.getElementById('loading-text').textContent = 'Crafting post ideas…';
+    }
+  }, 2500);
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: SYSTEM_PROMPT,
+        messages: conversationHistory
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      setLoading(false);
+      showError('API error: ' + data.error.message);
+      return;
+    }
+
+    let assistantContent = '';
+    for (const block of data.content) {
+      if (block.type === 'text') assistantContent += block.text;
+    }
+
+    conversationHistory.push({ role: 'assistant', content: data.content });
+
+    const jsonMatch = assistantContent.match(/\{[\s\S]*"posts"[\s\S]*\}/);
+    if (!jsonMatch) {
+      setLoading(false);
+      showError('Could not parse response. Please try again.');
+      return;
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    renderResults(parsed.posts, resetResults);
+    setLoading(false);
+    document.getElementById('more-btn-wrap').classList.add('show');
+
+  } catch (err) {
+    setLoading(false);
+    showError('Something went wrong. Check your connection and try again.');
+    console.error(err);
+  }
+}
+
+function renderResults(posts, reset) {
+  const container = document.getElementById('results');
+  if (reset) container.innerHTML = '';
+  container.classList.remove('hidden');
+
+  const startIdx = container.children.length;
+
+  posts.forEach((post, i) => {
+    const num = startIdx + i + 1;
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.style.animationDelay = (i * 0.08) + 's';
+
+    const sourcesHTML = post.sources && post.sources.length
+      ? post.sources.map((s, idx) => {
+          const isURL = s.startsWith('http');
+          return `<li><span class="src-num">${idx + 1}</span>${isURL ? `<a class="src-link" href="${s}" target="_blank">${s}</a>` : `<span class="src-link">${s}</span>`}</li>`;
+        }).join('')
+      : '<li><span style="font-size:12px;color:var(--text-muted)">No external sources cited</span></li>';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="card-num">Post ${num}</span>
+        <div class="card-topic">${escHtml(post.topic)}</div>
+      </div>
+      <div class="card-body">
+        <div>
+          <div class="section-label">Body</div>
+          <div class="post-text">${escHtml(post.body)}</div>
+        </div>
+        <div class="question-block">
+          <div class="section-label">Discussion question</div>
+          <div class="question-text">${escHtml(post.question)}</div>
+        </div>
+        <div class="photo-block">
+          <div class="section-label">📸 Photo concept</div>
+          <div class="photo-text">${escHtml(post.photo)}</div>
+        </div>
+      </div>
+      <div class="sources-block">
+        <div class="section-label" style="margin-bottom:10px">Sources</div>
+        <ul class="sources-list">${sourcesHTML}</ul>
+      </div>
+      <div class="card-actions">
+        <button class="copy-btn" onclick="copyPost(this, ${num - 1})">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy post text
+        </button>
+        <button class="copy-btn" onclick="copyAll(this, ${num - 1})">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Copy full idea
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  window._posts = window._posts || [];
+  if (reset) window._posts = posts;
+  else window._posts = window._posts.concat(posts);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function copyPost(btn, idx) {
+  const post = window._posts[idx];
+  if (!post) return;
+  navigator.clipboard.writeText(post.body).then(() => markCopied(btn));
+}
+
+function copyAll(btn, idx) {
+  const post = window._posts[idx];
+  if (!post) return;
+  const text = `🎯 TOPIC: ${post.topic}\n\n📝 BODY:\n${post.body}\n\n❓ QUESTION:\n${post.question}\n\n📸 PHOTO CONCEPT:\n${post.photo}\n\n🏷 TAG: ${post.tag}\n\n🔗 SOURCES:\n${(post.sources||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')}`;
+  navigator.clipboard.writeText(text).then(() => markCopied(btn));
+}
+
+function markCopied(btn) {
+  btn.classList.add('copied');
+  btn.textContent = '✓ Copied';
+  setTimeout(() => {
+    btn.classList.remove('copied');
+    btn.innerHTML = btn.getAttribute('data-orig') || btn.innerHTML;
+  }, 2000);
+}
+
+document.getElementById('keywords-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') generate('ideas');
+});
+
+switchMode('free');
+</script>
+</body>
+</html>
